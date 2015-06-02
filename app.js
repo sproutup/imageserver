@@ -5,8 +5,11 @@ var sharp = require('sharp');
 
 var s3 = new aws.S3();
 
-app.get('/', function (req, res) {
-  var params = {Bucket: 'sproutup-test-upload', Key: 'cb4138a1-ca4f-48c0-b6e0-18a5a900a702_4.jpg'};
+app.get('/image/:key', function (req, res) {
+  console.log("key: ", req.params.key);
+  console.log("w: ", req.query.w);  
+  console.log("h: ", req.query.h);  
+  var params = {Bucket: 'sproutup-test-upload', Key: req.params.key};
   var transformer = sharp()
     .resize(300, 200)
     .crop(sharp.gravity.north)
