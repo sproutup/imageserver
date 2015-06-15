@@ -1,26 +1,17 @@
-environment_name = dev
+environment_name = develop
 platform = docker
-application_name = imageserver
+application_name = imageserver-develop
 region = us-west-2
 keypair = endurance
 cname = imageserver-develop-sproutup-co
 configuration = imageserver-develop
-
-#master : environment_name = sproutup
-#master : platform = docker
-#master : application_name = imageserver
-#master : region = us-west-2
-#master : keypair = endurance
-#master : cname = imageserver-master-sproutup-co
-#master : configuration = imageserver-develop
-#master : myvar = helloworld
 
 
 all: deploy
 
 master:
 	$(eval cname := imageserver-master-sproutup-co)	
-	$(eval environment_name := sproutup)	
+	$(eval environment_name := master)
 	$(eval configuration := imageserver-master)	
 	$(eval application_name := imageserver-master)	
 	echo $(cname)
