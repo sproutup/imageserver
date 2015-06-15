@@ -4,16 +4,25 @@ var aws = require('aws-sdk');
 var sharp = require('sharp'); 
 var ioredis = require('ioredis');
 
-var redis = new ioredis(6379, '192.168.59.103');
+var redisUrl = process.env.REDISURL; // || '0.0.0.0';
+var redisPort = process.env.REDISPORT; // || 6379;
+var bucket = process.env.S3BUCKET;
+
+console.log("redis.url:", redisUrl);
+console.log("redis.port:", redisPort);
+console.log("bucket:", bucket);
+
+
+//var redis = new ioredis(6379, '192.168.59.103');
+var redis = new ioredis(redisPort, redisUrl);
 var s3 = new aws.S3();
-var bucket = 'sproutup-test-upload';
+//var bucket = 'sproutup-test-upload';
 
 app.get('/', function (req, res) {
     res.send('image server');
 });
 
 app.get('/image/:key', function (req, res) {
-    var params = {Bucket: 'sproutup-test-upload', Key: req.params.key};
     var transformer = sharp()
         .resize(300, 200)
         .crop(sharp.gravity.north)
@@ -37,6 +46,7 @@ app.get('/image/:key', function (req, res) {
         else{
             // no image found in cache  
             console.log('cache miss');
+            var params = {Bucket: bucket, Key: req.params.key};
             s3.getObject(params, function(err, data) {
                 if(data!=null){
                     console.log('got s3 image');
@@ -45,7 +55,8 @@ app.get('/image/:key', function (req, res) {
                     : req.query.h});
                 }
                 else{
-                    console.log('failed to get s3 image');
+                    console.log('failed to get s3 image', params);
+                    res.status(404).send('Image not found');
                 }
             })
         }    
