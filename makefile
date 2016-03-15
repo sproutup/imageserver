@@ -1,66 +1,52 @@
 environment_name = develop
 platform = docker
-application_name = imageserver-develop
+application_name = imageserver
 region = us-west-2
 keypair = endurance
-cname = imageserver-develop-sproutup-co
-configuration = imageserver-develop
+configuration = imageserver
+domain = sproutup-co
+repo = sproutupco
 
 
-all: deploy
+all: install
+	PORT=3002 nodemon bin/www
+
+install:
+	npm install
 
 master:
-	$(eval cname := imageserver-master-sproutup-co)	
 	$(eval environment_name := master)
-	$(eval configuration := imageserver-master)	
-	$(eval application_name := imageserver-master)	
-	echo $(cname)
-	echo $(environment_name)
 
-echo: 
-	echo $(cname)
-	echo $(environment_name)
-
-deploy: init
-	eb deploy
-
-init:
-	eb init -r $(region) -p $(platform) -k $(keypair) $(environment_name)
-
-recreate: terminate create
-
-create: init
-	eb create $(application_name) -c $(cname) --cfg $(configuration)
-
-terminate: init
-	eb terminate $(application_name) --force
+develop:
+	$(eval environment_name := develop)
 
 build:
-	docker build -t imageserver .
+	docker build -t $(repo)/$(application_name):$(environment_name) .
+
+push: build
+	docker push $(repo)/$(application_name):$(environment_name)
+
+deploy: push
+	$(MAKE) -C target $(environment_name) deploy
+
+create: push
+	$(MAKE) -C target $(environment_name) create
+
+terminate:
+	$(MAKE) -C target $(environment_name) terminate
 
 rebuild: stop delete build run
 
 stop:
-	docker stop imageserver
+	docker stop $(application_name)
 
 restart: stop start
 
 start:
-	docker start imageserver
+	docker start $(application_name)
 
 run:
-	docker run -d -p 3000:3000 --name imageserver --env-file local-env.list imageserver
+	docker run -p 9000:9000 -it --rm $(repo)/$(application_name):$(environment_name) /bin/sh
 
-delete:
-	docker rm imageserver
-
-local:
-	export REDISURL="192.168.59.103"
-	export REDISPORT=6379
-	export S3BUCKET="sproutup-test-bucket"
-
-config:
-	eb config $(configuration) --cfg $(configuration)
-
-put:
-	eb config put $(configuration)
+delete: init
+	docker rm $(application_name)

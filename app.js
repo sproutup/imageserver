@@ -1,12 +1,12 @@
 var express = require('express');
 var app = express();
 var aws = require('aws-sdk');
-var sharp = require('sharp'); 
+var sharp = require('sharp');
 var ioredis = require('ioredis');
 
-var redisUrl = process.env.REDISURL; // || '0.0.0.0';
-var redisPort = process.env.REDISPORT; // || 6379;
-var bucket = process.env.S3BUCKET;
+var redisUrl = process.env.REDIS_HOST || '127.0.0.1';
+var redisPort = process.env.REDIS_PORT || 6379;
+var bucket = process.env.AWS_S3_BUCKET;
 
 console.log("redis.url:", redisUrl);
 console.log("redis.port:", redisPort);
@@ -36,7 +36,7 @@ app.get('/image/:key', function (req, res) {
         if(err){
             console.log(err);
         }
-        
+
         if(image!=null){
             // image found in cache
             console.log('cache hit');
@@ -44,7 +44,7 @@ app.get('/image/:key', function (req, res) {
                     : req.query.h});
         }
         else{
-            // no image found in cache  
+            // no image found in cache
             console.log('cache miss');
             var params = {Bucket: bucket, Key: req.params.key};
             s3.getObject(params, function(err, data) {
@@ -59,7 +59,7 @@ app.get('/image/:key', function (req, res) {
                     res.status(404).send('Image not found');
                 }
             })
-        }    
+        }
     });
 
     //res.setHeader('content-type', "image/jpeg")
@@ -74,7 +74,7 @@ function toInt(str){
     if(isNaN(num)){
         return num;
     }
-    else{        
+    else{
         if(num >= min && num <= max){
             return num;
         }
@@ -83,7 +83,7 @@ function toInt(str){
             return NaN;
         }
     }
-};    
+};
 
 
 function transform(params, callback){
@@ -107,7 +107,7 @@ function render(params, callback){
     transform({image: params.image, h: params.h, w: params.w},function(err,result){
         params.res.setHeader('content-type', "image/jpeg");
         params.res.end(result);
-    })   
+    })
 }
 
 var server = app.listen(3000, function () {
@@ -115,4 +115,3 @@ var server = app.listen(3000, function () {
     var port = server.address().port;
     console.log('Example app listening at http://%s:%s', host, port);
 });
-
